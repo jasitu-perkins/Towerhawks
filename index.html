@@ -45,7 +45,8 @@
                 <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-6">Current Standings</h3>
                 
                 <!-- Dynamic Leaderboard Content Injected Here -->
-                <div id="leaderboard-container" class="space-y-6">
+                <!-- ADDED: max-h-96 (limits height) and overflow-y-auto (adds scrollbar if it gets too long) -->
+                <div id="leaderboard-container" class="space-y-6 max-h-96 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                     <!-- Placeholder loading state -->
                     <div class="animate-pulse flex space-x-4">
                         <div class="flex-1 space-y-4 py-1">
@@ -70,21 +71,24 @@
          * Configuration
          * Change 'USE_MOCK_DATA' to false when you have your Render backend set up.
          */
-        const USE_MOCK_DATA = false; 
+        const USE_MOCK_DATA = true; 
         
         // This is the URL to your Render backend (e.g., https://your-app-name.onrender.com/api/campaign-data)
         const RENDER_BACKEND_URL = 'https://gfm-backend-6lb2.onrender.com/api/leaderboard';
 
         // Mock data simulating the aggregated response from your custom backend
+        // UPDATED: Changed mock data to reflect Company names just in case you ever need to test it again
         const MOCK_API_RESPONSE = {
             campaign: {
                 goal: 10000,
                 total_raised: 6540
             },
             votes: [
-                { option: "Option A (Blue Team)", votes: 3200, color: "bg-blue-500" },
-                { option: "Option B (Red Team)", votes: 2100, color: "bg-red-500" },
-                { option: "Option C (Green Team)", votes: 1240, color: "bg-emerald-500" }
+                { option: "Acme Corp", votes: 4, color: "bg-blue-500" },
+                { option: "TechNova Solutions", votes: 3, color: "bg-emerald-500" },
+                { option: "Globex Dynamics", votes: 2, color: "bg-purple-500" },
+                { option: "Stark Industries", votes: 1, color: "bg-amber-500" },
+                { option: "Wayne Enterprises", votes: 0, color: "bg-rose-500" }
             ]
         };
 
@@ -94,7 +98,7 @@
         const mainProgressBarEl = document.getElementById('main-progress-bar');
         const leaderboardContainer = document.getElementById('leaderboard-container');
 
-        // Formatter for currency
+        // Formatter for currency (Keeping this only for the Total Raised header)
         const currencyFormatter = new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: 'USD',
@@ -121,30 +125,32 @@
             // Clear loading placeholder
             leaderboardContainer.innerHTML = '';
 
-            // Get total votes (or total money mapped to votes) to calculate bar percentages
+            // Get total votes to calculate fractions and percentages
             const totalVotes = sortedVotes.reduce((sum, item) => sum + item.votes, 0);
 
             // Render each option
             sortedVotes.forEach((item, index) => {
-                const percentage = totalVotes === 0 ? 0 : (item.votes / totalVotes) * 100;
+                // Calculate percentage (default to 0 if no votes exist yet)
+                const rawPercentage = totalVotes === 0 ? 0 : (item.votes / totalVotes) * 100;
+                const displayPercentage = Math.round(rawPercentage);
                 
                 // Fallback color if not provided
                 const barColor = item.color || 'bg-gray-600';
                 
                 // Determine rank styling
                 let rankTrophy = '';
-                if (index === 0) rankTrophy = '🥇';
-                if (index === 1) rankTrophy = '🥈';
-                if (index === 2) rankTrophy = '🥉';
+                if (index === 0 && item.votes > 0) rankTrophy = '🥇';
+                if (index === 1 && item.votes > 0) rankTrophy = '🥈';
+                if (index === 2 && item.votes > 0) rankTrophy = '🥉';
 
                 const itemHTML = `
                     <div class="flex flex-col mb-4">
                         <div class="flex justify-between items-center mb-1">
                             <span class="text-sm font-semibold text-gray-700">${rankTrophy} ${item.option}</span>
-                            <span class="text-sm font-bold text-gray-900">${currencyFormatter.format(item.votes)}</span>
+                            <span class="text-sm font-bold text-gray-900">${item.votes} / ${totalVotes} (${displayPercentage}%)</span>
                         </div>
                         <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
-                            <div class="${barColor} h-3 rounded-full bar-transition" style="width: 0%;" data-target-width="${percentage}%"></div>
+                            <div class="${barColor} h-3 rounded-full bar-transition" style="width: 0%;" data-target-width="${rawPercentage}%"></div>
                         </div>
                     </div>
                 `;
