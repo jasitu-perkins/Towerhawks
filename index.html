@@ -17,29 +17,7 @@
 
     <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         
-        <!-- Header Section -->
-        <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white text-center">
-            <h1 class="text-3xl font-bold mb-2">Campaign Leaderboard</h1>
-            <p class="text-green-100 text-sm">Every donation counts as a vote. See who's winning!</p>
-        </div>
-
         <div class="p-6 md:p-8">
-            <!-- Overall Progress -->
-            <div class="mb-10">
-                <div class="flex justify-between items-end mb-2">
-                    <h2 class="text-lg font-semibold text-gray-800">Total Raised</h2>
-                    <div class="text-right">
-                        <span id="total-raised" class="text-2xl font-bold text-green-600">$0</span>
-                        <span id="campaign-goal" class="text-sm text-gray-500"> / $0</span>
-                    </div>
-                </div>
-                <!-- Progress Bar Track -->
-                <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden relative shadow-inner">
-                    <!-- Progress Bar Fill -->
-                    <div id="main-progress-bar" class="bg-green-500 h-4 rounded-full bar-transition" style="width: 0%;"></div>
-                </div>
-            </div>
-
             <!-- Voting Leaderboard -->
             <div>
                 <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-6">Current Standings</h3>
@@ -58,67 +36,20 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="mt-8 text-center text-xs text-gray-400 flex justify-between items-center">
-                <span>Updates every few minutes</span>
-                <span class="bg-gray-100 px-2 py-1 rounded">Powered by GFM Pro API</span>
-            </div>
         </div>
     </div>
 
     <script>
         /**
          * Configuration
-         * Change 'USE_MOCK_DATA' to false when you have your Render backend set up.
          */
-        const USE_MOCK_DATA = false; 
-        
-        // This is the URL to your Render backend (e.g., https://your-app-name.onrender.com/api/campaign-data)
+        // This is the URL to your Render backend
         const RENDER_BACKEND_URL = 'https://gfm-backend-6lb2.onrender.com/api/leaderboard';
 
-        // Mock data simulating the aggregated response from your custom backend
-        // UPDATED: Changed mock data to reflect Company names just in case you ever need to test it again
-        const MOCK_API_RESPONSE = {
-            campaign: {
-                goal: 10000,
-                total_raised: 6540
-            },
-            votes: [
-                { option: "Acme Corp", votes: 4, color: "bg-blue-500" },
-                { option: "TechNova Solutions", votes: 3, color: "bg-emerald-500" },
-                { option: "Globex Dynamics", votes: 2, color: "bg-purple-500" },
-                { option: "Stark Industries", votes: 1, color: "bg-amber-500" },
-                { option: "Wayne Enterprises", votes: 0, color: "bg-rose-500" }
-            ]
-        };
-
         // UI Elements
-        const totalRaisedEl = document.getElementById('total-raised');
-        const campaignGoalEl = document.getElementById('campaign-goal');
-        const mainProgressBarEl = document.getElementById('main-progress-bar');
         const leaderboardContainer = document.getElementById('leaderboard-container');
 
-        // Formatter for currency (Keeping this only for the Total Raised header)
-        const currencyFormatter = new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: 0
-        });
-
         function renderLeaderboard(data) {
-            // Update Campaign Progress
-            totalRaisedEl.textContent = currencyFormatter.format(data.campaign.total_raised);
-            campaignGoalEl.textContent = ` / ${currencyFormatter.format(data.campaign.goal)}`;
-            
-            let progressPercentage = (data.campaign.total_raised / data.campaign.goal) * 100;
-            // Cap at 100% for visual purposes
-            progressPercentage = Math.min(progressPercentage, 100);
-            
-            // Add a small delay for the animation effect
-            setTimeout(() => {
-                mainProgressBarEl.style.width = `${progressPercentage}%`;
-            }, 100);
-
             // Sort votes from highest to lowest
             const sortedVotes = data.votes.sort((a, b) => b.votes - a.votes);
             
@@ -126,30 +57,30 @@
             leaderboardContainer.innerHTML = '';
 
             // Get total votes to calculate fractions and percentages
-            const totalVotes = sortedVotes.reduce((sum, item) => sum + item.votes, 0);
+            const rawTotalVotes = sortedVotes.reduce((sum, item) => sum + item.votes, 0);
 
             // Render each option
-            sortedVotes.forEach((item, index) => {
+            sortedVotes.forEach((item) => {
                 // Calculate percentage (default to 0 if no votes exist yet)
-                const rawPercentage = totalVotes === 0 ? 0 : (item.votes / totalVotes) * 100;
+                const rawPercentage = rawTotalVotes === 0 ? 0 : (item.votes / rawTotalVotes) * 100;
                 const displayPercentage = Math.round(rawPercentage);
                 
                 // Fallback color if not provided
                 const barColor = item.color || 'bg-gray-600';
-                
-                // Determine rank styling
-                let rankTrophy = '';
-                if (index === 0 && item.votes > 0) rankTrophy = '🥇';
-                if (index === 1 && item.votes > 0) rankTrophy = '🥈';
-                if (index === 2 && item.votes > 0) rankTrophy = '🥉';
 
+                // Added ARIA labels and improved contrast for accessibility 
                 const itemHTML = `
                     <div class="flex flex-col mb-4">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-sm font-semibold text-gray-700">${rankTrophy} ${item.option}</span>
-                            <span class="text-sm font-bold text-gray-900">${item.votes} / ${totalVotes} (${displayPercentage}%)</span>
+                            <span class="text-sm font-bold text-gray-800">${item.option}</span>
+                            <span class="text-sm font-bold text-gray-900">${displayPercentage}%</span>
                         </div>
-                        <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner" 
+                             role="progressbar" 
+                             aria-label="Vote percentage for ${item.option}" 
+                             aria-valuenow="${displayPercentage}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
                             <div class="${barColor} h-3 rounded-full bar-transition" style="width: 0%;" data-target-width="${rawPercentage}%"></div>
                         </div>
                     </div>
@@ -168,12 +99,6 @@
         }
 
         async function fetchCampaignData() {
-            if (USE_MOCK_DATA) {
-                console.log("Using mock data. To use real data, connect your backend.");
-                renderLeaderboard(MOCK_API_RESPONSE);
-                return;
-            }
-
             try {
                 // This fetches from YOUR custom backend on Render
                 const response = await fetch(RENDER_BACKEND_URL);
@@ -185,9 +110,9 @@
                 const data = await response.json();
                 renderLeaderboard(data);
             } catch (error) {
-                console.error("Error fetching data:", error);
+                // Fails silently in console but alerts the user in the UI
                 leaderboardContainer.innerHTML = `
-                    <div class="bg-red-50 text-red-600 p-4 rounded-lg text-sm text-center">
+                    <div class="bg-red-50 text-red-700 p-4 rounded-lg text-sm text-center font-medium border border-red-200" role="alert">
                         Unable to load leaderboard data right now. Please try again later.
                     </div>
                 `;
