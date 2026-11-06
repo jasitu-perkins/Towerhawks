@@ -15,16 +15,21 @@
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+    <!-- Changed to a <main> tag for better document semantics -->
+    <main class="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         
         <div class="p-6 md:p-8">
             <!-- Voting Leaderboard -->
-            <div>
-                <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-6">Current Standings</h3>
+            <section>
+                <!-- Changed to h1 for iframe context -->
+                <h1 class="text-xl font-bold text-gray-800 border-b pb-2 mb-6">Current Standings</h1>
                 
-                <!-- Dynamic Leaderboard Content Injected Here -->
-                <!-- ADDED: max-h-96 (limits height) and overflow-y-auto (adds scrollbar if it gets too long) -->
-                <div id="leaderboard-container" class="space-y-6 max-h-96 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <!-- ADDED: tabindex="0" for keyboard scrolling and aria-live="polite" for dynamic updates -->
+                <div id="leaderboard-container" 
+                     class="space-y-6 max-h-96 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+                     tabindex="0"
+                     aria-live="polite"
+                     aria-busy="true">
                     <!-- Placeholder loading state -->
                     <div class="animate-pulse flex space-x-4">
                         <div class="flex-1 space-y-4 py-1">
@@ -50,6 +55,9 @@
         const leaderboardContainer = document.getElementById('leaderboard-container');
 
         function renderLeaderboard(data) {
+            // Data has loaded, tell screen readers it is no longer busy
+            leaderboardContainer.setAttribute('aria-busy', 'false');
+
             // Sort votes from highest to lowest
             const sortedVotes = data.votes.sort((a, b) => b.votes - a.votes);
             
